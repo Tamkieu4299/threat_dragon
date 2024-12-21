@@ -2,12 +2,14 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import text
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, UploadFile, Form
 from db import get_db_connection
 from passlib.context import CryptContext
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-
+import os
+import subprocess
+import uuid
 
 # Create the FastAPI app with custom metadata
 app = FastAPI(
@@ -158,3 +160,38 @@ def secure_dos(username: str, request: Request):
     finally:
         cursor.close()
         conn.close()
+
+@app.post("/upload-vulnerable")
+async def upload_vulnerable(file: UploadFile, metadata: str = Form(...)):
+    """
+    Vulnerable file upload endpoint.
+    Demonstrates shell injection using metadata or additional input fields.
+    """
+    try:
+        # Save the uploaded file to a temporary directory
+        file_location = f"/tmp/{file.filename}"
+        with open(file_location, "wb") as f:
+            f.write(await file.read())
+
+        # Vulnerable: Metadata is directly passed to the shell command
+        os.system(f"file {file_location} && echo {metadata}")
+        return {"message": f"File {file.filename} processed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/upload-secure")
+async def upload_file_secure(file: UploadFile, metadata: str = Form(...)):
+    # Validate metadata
+    if ";" in metadata or "&" in metadata or "|" in metadata:
+        raise HTTPException(status_code=400, detail="Invalid metadata")
+
+    # Save the file with a secure name
+    import uuid
+    safe_file_name = f"{uuid.uuid4()}.tmp"
+    file_location = f"/tmp/{safe_file_name}"
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    # Secure: Use subprocess.run with shell=False
+    result = subprocess.run(["echo", metadata], capture_output=True, text=True)
+    return {"message": "File uploaded and processed securely", "output": result.stdout}
