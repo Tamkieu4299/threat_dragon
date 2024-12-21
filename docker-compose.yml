@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  sec_app:
+    build:
+      context: ./app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app 
+    depends_on:
+      - sec_db
+    environment:
+      DATABASE_HOST: sec_db
+      DATABASE_USER: docker
+      DATABASE_PASSWORD: docker
+      DATABASE_NAME: demo_db
+    links:
+      - sec_db
+    networks:
+      - sec_network
+  sec_db:
+    image: postgres:13
+    container_name: sql_injection_db
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: demo_db
+    ports:
+      - "5470:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - sec_network
+volumes:
+  db_data:
+networks:
+  sec_network:
+    driver: bridge
