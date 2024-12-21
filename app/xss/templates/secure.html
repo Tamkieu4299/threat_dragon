@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure XSS Demo</title>
+</head>
+<body>
+    <h1>Secure XSS Demo</h1>
+    <form action="/secure" method="post">
+        <textarea name="comment"></textarea>
+        <button type="submit">Submit</button>
+    </form>
+    <h2>Comments:</h2>
+    <ul>
+        {% for comment in comments %}
+            <li>{{ comment }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

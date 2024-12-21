@@ -10,6 +10,7 @@ from slowapi.util import get_remote_address
 import os
 import subprocess
 import uuid
+from xss.xss import router as xss_router
 
 # Create the FastAPI app with custom metadata
 app = FastAPI(
@@ -29,6 +30,8 @@ Use these endpoints to test SQL Injection scenarios.
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
+
+app.include_router(xss_router)
 
 @app.post("/vulnerable-login")
 def login(username: str, password: str):

@@ -5,3 +5,5 @@ sqlalchemy
 pymysql
 passlib
 slowapi
+jinja2
+python-multipart
