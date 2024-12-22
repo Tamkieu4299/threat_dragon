@@ -6,31 +6,53 @@ router = APIRouter()
 
 @router.get("/send-data")
 async def send_data():
-    # Example of sensitive data (this should NEVER be sent without encryption)
+    """
+    Demonstrates data being sent without encryption, making it susceptible to interception.
+    """
     sensitive_data = {
         "username": "victim_user",
         "password": "password123"
     }
-    # Simulating an HTTP connection (plain text, susceptible to MITM)
+    # Simulating a plain HTTP connection
     response = requests.post("http://example.com/receive-data", json=sensitive_data)
-    return {"status": "Data sent", "response_code": response.status_code}
+    intercepted_data = {
+        "username": "intercepted_user",
+        "password": "interceptedPassword123"
+    }
+    return {
+        "status": "Data sent",
+        "response_code": response.status_code,
+        "original_data": sensitive_data,
+        "intercepted_data": intercepted_data
+    }
 
 @router.get("/send-secure-data")
 async def send_secure_data():
+    """
+    Demonstrates secure data transmission using HTTPS.
+    """
     sensitive_data = {
         "username": "secure_user",
         "password": "securePassword123"
     }
-    # Simulating a secure HTTPS connection
-    response = requests.post("https://secure.example.com/receive-data", json=sensitive_data)
-    return {"status": "Secure data sent", "response_code": response.status_code}
+    # Simulating a secure HTTPS connection with a valid testing endpoint
+    try:
+        response = requests.post("https://jsonplaceholder.typicode.com/posts", json=sensitive_data)
+        return {
+            "status": "Secure data sent",
+            "response_code": response.status_code,
+            "original_data": sensitive_data,
+            "response_text": response.text
+        }
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
+
 
 @router.post("/spoofed-data")
 async def spoofed_data(payload: dict):
     """
     Simulates an attacker modifying data during transit.
     """
-    # Simulate an intercepted payload modification
     if "username" in payload and "password" in payload:
         spoofed_payload = payload.copy()
         spoofed_payload["username"] = "hacker_user"
